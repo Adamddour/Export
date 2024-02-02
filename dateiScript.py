@@ -1,6 +1,6 @@
 import csv
 
-def read_csv(file_path, selected_fields, filter_column=None, filter_values=None):
+def read_csv(file_path, selected_fields, filter_columns=None, filter_values=None):
     data = []
     counts = {}  # Dictionary zur Verfolgung der Zählungen für jeden eindeutigen Wert
 
@@ -16,31 +16,32 @@ def read_csv(file_path, selected_fields, filter_column=None, filter_values=None)
         for row in reader:
             selected_data = {field: row[field] for field in selected_fields if field in row}
 
-            # Überprüfe, ob eine Filterbedingung angegeben ist und die Bedingung erfüllt ist
-            if filter_column is not None and filter_values is not None:
-                column_value = row.get(filter_column)
-                # Überprüfe, ob der Wert in den Filterwerten enthalten ist, einschließlich Leerzeichen
-                if any(value.strip() == column_value for value in filter_values):
+            # Überprüfe, ob Filterbedingungen angegeben sind und die Bedingungen erfüllt sind
+            if filter_columns is not None and filter_values is not None:
+                filter_match = all(row.get(col) == val for col, val in zip(filter_columns, filter_values))
+                if filter_match:
                     data.append(selected_data)
-                    counts.setdefault(column_value, 0)
-                    counts[column_value] += 1
+                    counts.setdefault(tuple(filter_values), 0)
+                    counts[tuple(filter_values)] += 1
             else:
                 data.append(selected_data)
 
     return data, counts
 
 file_path = r'M:\_Ordnerumleitung\Desktop\Tasks\ExcelDateiauslesen\export.csv'
-selected_fields = ['StableNet Status']  # Ersetze dies durch die tatsächlichen Spaltennamen
-filter_column = 'StableNet Status'
-filter_values = ['Angelegt', 'Nicht angelegt']
+selected_fields = ['StableNet Status', 'Daten vollständig','Erreichbar Status + Fehler']  # Ersetze dies durch die tatsächlichen Spaltennamen
+filter_columns = ['StableNet Status', 'Daten vollständig','Erreichbar Status + Fehler']
 
-result, counts = read_csv(file_path, selected_fields, filter_column, filter_values)
+filter_values_nicht_angelegt_ja = ['Nicht angelegt', 'ja']
+filter_values_nicht_angelegt_nein = ['Nicht angelegt', 'nein','Nicht geprüft']
 
-#for entry in result:
-    #print(entry)
+result, counts_nicht_angelegt_ja = read_csv(file_path, selected_fields, filter_columns, filter_values_nicht_angelegt_ja)
+result, counts_nicht_angelegt_nein = read_csv(file_path, selected_fields, filter_columns, filter_values_nicht_angelegt_nein)
 
-for value, count in counts.items():
-    print(f"Anzahl der Zeilen für '{value}': {count}")
+
+print(f"Anzahl der Zeilen für 'Nicht angelegt' Daten vollständig ja: {counts_nicht_angelegt_ja.get(tuple(filter_values_nicht_angelegt_ja), 0)}")
+print(f"Anzahl der Zeilen für 'Nicht angelegt' Daten vollständig nein und Nicht geprüft: {counts_nicht_angelegt_nein.get(tuple(filter_values_nicht_angelegt_nein), 0)}")
+
 
 
 
@@ -48,4 +49,4 @@ for value, count in counts.items():
 #Wo für steht r?
 #um sicherzustellen, dass etwaige Escape-Zeichen im Pfad nicht interpretiert werden.
 #  Dies kann nützlich sein, wenn du Windows-Pfade mit Backslashes verwendest,
-#  da \ ein Escape-Zeichen in normalen Strings ist......
+#  da \ ein Escape-Zeichen in normalen Strings ist.
